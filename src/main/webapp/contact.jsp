@@ -1,3 +1,33 @@
+<%@ page contentType="text/html; charset=UTF-8" language="java" %>
+<%@ page import="java.util.Properties" %>
+<%@ page import="javax.mail.Message" %>
+<%@ page import="javax.mail.Session" %>
+<%@ page import="javax.mail.Transport" %>
+<%@ page import="javax.mail.internet.InternetAddress" %>
+<%@ page import="javax.mail.internet.MimeMessage" %>
+<%@ page import="com.google.apphosting.api.ApiProxy" %>
+<%
+if (request.getMethod().equals("POST")) {
+	String text = request.getParameter("message");
+	String to = request.getParameter("email");
+	String toName = request.getParameter("toName");
+	String from = ApiProxy.getCurrentEnvironment().getAppId() + "@appspotmail.com";
+	Properties props = new Properties();
+	Session s = Session.getDefaultInstance(props, null);
+	try {
+		Message mail = new MimeMessage(s);
+		mail.setFrom(new InternetAddress(from, "Não Responder"));
+		mail.addRecipient(Message.RecipientType.TO,
+			new InternetAddress(to, toName));
+		mail.setSubject("Obrigado pelo seu contato");
+		mail.setText(text);
+		Transport.send(mail);
+		request.setAttribute("sent", true);
+	} catch (Exception e) {
+		request.setAttribute("error", e.getMessage());
+	}
+}
+%>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -62,7 +92,7 @@
                         <a href="blog.html">Blog</a>
                     </li>
                     <li>
-                        <a href="contact.html">Contact</a>
+                        <a href="contact.jsp">Contact</a>
                     </li>
                 </ul>
             </div>
@@ -111,24 +141,34 @@
                     </h2>
                     <hr>
                     <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Fugiat, vitae, distinctio, possimus repudiandae cupiditate ipsum excepturi dicta neque eaque voluptates tempora veniam esse earum sapiente optio deleniti consequuntur eos voluptatem.</p>
-                    <form role="form">
+					<% if (request.getAttribute("sent") != null) { %>
+					<div class="alert alert-success">
+						Email enviado com sucesso!
+					</div>
+					<% } else if (request.getAttribute("error") != null) { %>
+					<div class="alert alert-danger">
+						Houve um erro ao enviar seu e-mail:
+						<%= request.getAttribute("error") %>
+					</div>
+					<% } %>
+                    <form role="form" method="POST">
                         <div class="row">
                             <div class="form-group col-lg-4">
                                 <label>Name</label>
-                                <input type="text" class="form-control">
+                                <input type="text" class="form-control" name="name">
                             </div>
                             <div class="form-group col-lg-4">
                                 <label>Email Address</label>
-                                <input type="email" class="form-control">
+                                <input type="email" class="form-control" name="email">
                             </div>
                             <div class="form-group col-lg-4">
                                 <label>Phone Number</label>
-                                <input type="tel" class="form-control">
+                                <input type="tel" class="form-control" name="phone">
                             </div>
                             <div class="clearfix"></div>
                             <div class="form-group col-lg-12">
                                 <label>Message</label>
-                                <textarea class="form-control" rows="6"></textarea>
+                                <textarea class="form-control" rows="6" name="message"></textarea>
                             </div>
                             <div class="form-group col-lg-12">
                                 <input type="hidden" name="save" value="contact">
